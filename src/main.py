@@ -73,14 +73,31 @@ for k, v in song_staffs.items():
         measure = stream.Measure()
         
         for idx, n in enumerate(m_notes):
+            #print(n)
             if n == "RS":
                 measure.leftBarline = bar.Repeat(direction="start")
             elif n == "RE":
                 measure.rightBarline = bar.Repeat(direction="end")
             elif n == "CODA":
                 measure.append(repeat.Coda())
+            elif n == "ToCoda":
+                # measure.append(expressions.TextExpression("To Coda"))
+                measure.append(expressions.TextExpression("To Coda"))
             elif n == "NEW":
                 measure.append(layout.SystemLayout(isNew=True))
+            elif n == "RDB":
+                measure.rightBarline = bar.Barline("double")
+            elif n == "LDB":
+                measure.leftBarline = bar.Barline("double")
+            elif n == "FB":
+                measure.rightBarline = bar.Barline("final")
+            else:
+                pitch, length = n.split("/")
+                length = float(length)
+                if pitch == "rest":
+                    measure.append(note.Rest(quarterLength=length))
+                else:
+                    measure.append(note.Note(pitch, quarterLength=length))
         
         part.append(measure)
 
