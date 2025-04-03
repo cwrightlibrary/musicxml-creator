@@ -1,83 +1,48 @@
-import xml.etree.ElementTree as ET
-from io import StringIO
+from music21 import *
 
-# Create the root element
-score_partwise = ET.Element("score-partwise", version="4.0")
+notation_file = "src/notation.txt"
 
-# Create the part-list element
-part_list = ET.SubElement(score_partwise, "part-list")
+notation_text = open(notation_file, "r", encoding="utf-8")
 
-# Create the score-part element
-score_part = ET.SubElement(part_list, "score-part", id="P1")
-part_name = ET.SubElement(score_part, "part-name")
-part_name.text = "Music"
+keys = {
+    "C": 0, "G": 1, "D": 2, "A": 3, "E": 4, "B": 5, "F#": 6, "C#": 7,
+    "F": -1, "Bb": -2, "Eb": -3, "Ab": -4, "Db": -5, "Gb": -6, "Cb": -7
+}
 
-# Create the part element
-part = ET.SubElement(score_partwise, "part", id="P1")
+raw_song_measures = []
 
-# Create the first measure
-measure = ET.SubElement(part, "measure", number="1")
+for idx, line in enumerate(notation_text.readlines()):
+    if "Title: " in line:
+        song_title = line[7:].strip()
+    if "Composer: " in line:
+        song_composer = line[10:].strip()
+    
+    if "Tempo: " in line:
+        song_tempo = int(line[7:].strip())
+    if "Swing: " in line and "True" in line:
+        song_swing = True
+    elif "Swing: " in line and "False" in line:
+        song_swing = False
+    
+    if "Key: " in line:
+        song_key = keys[line[5:].strip()]
+    if "Time: " in line:
+        song_time = line[6:].strip()
+    
+    if idx >= 11 and line.strip() != "":
+        raw_song_measures.append(line.strip())
 
-# Create the attributes for the measure
-attributes = ET.SubElement(measure, "attributes")
+song_measures = []
 
-# Divisions element
-divisions = ET.SubElement(attributes, "divisions")
-divisions.text = "1"
+for idx in range(0, len(raw_song_measures), 2):
+    chords_notes = []
+    chords_notes.append(raw_song_measures[idx])
+    chords_notes.append(raw_song_measures[idx + 1])
+    song_measures.append(chords_notes)
 
-# Key element
-key = ET.SubElement(attributes, "key")
-fifths = ET.SubElement(key, "fifths")
-fifths.text = "0"
-
-# Time element
-time = ET.SubElement(attributes, "time")
-beats = ET.SubElement(time, "beats")
-beats.text = "4"
-beat_type = ET.SubElement(time, "beat-type")
-beat_type.text = "4"
-
-# Clef element
-clef = ET.SubElement(attributes, "clef")
-sign = ET.SubElement(clef, "sign")
-sign.text = "G"
-line = ET.SubElement(clef, "line")
-line.text = "2"
-
-# Create a note
-note = ET.SubElement(measure, "note")
-
-# Pitch element
-pitch = ET.SubElement(note, "pitch")
-step = ET.SubElement(pitch, "step")
-step.text = "C"
-octave = ET.SubElement(pitch, "octave")
-octave.text = "4"
-
-# Duration element
-duration = ET.SubElement(note, "duration")
-duration.text = "4"
-
-# Type element
-note_type = ET.SubElement(note, "type")
-note_type.text = "whole"
-
-# Create the XML tree from the root
-tree = ET.ElementTree(score_partwise)
-
-# Create a string buffer to write the XML content
-xml_str = StringIO()
-
-# Write the DOCTYPE declaration followed by the XML tree to the buffer
-xml_str.write('<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n')
-xml_str.write('<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "partwise.dtd">\n')
-tree.write(xml_str, encoding="UTF-8", xml_declaration=False)
-
-# Get the XML string
-xml_content = xml_str.getvalue()
-
-# Write the XML content to a file
-with open("musicxml_example_with_doctype.xml", "w", encoding="UTF-8") as file:
-    file.write(xml_content)
-
-print("XML file with DOCTYPE has been created successfully.")
+for m in song_measures:
+    chords = m[0].replace(")", "").split("(")
+    chords.pop(0)
+    notes = m[1].replace("]", "").split("[")
+    notes.pop(0)
+    print(chords, notes)
