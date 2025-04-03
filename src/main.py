@@ -40,9 +40,49 @@ for idx in range(0, len(raw_song_measures), 2):
     chords_notes.append(raw_song_measures[idx + 1])
     song_measures.append(chords_notes)
 
-for m in song_measures:
+song_staffs = {}
+
+for idx, m in enumerate(song_measures):
     chords = m[0].replace(")", "").split("(")
     chords.pop(0)
     notes = m[1].replace("]", "").split("[")
     notes.pop(0)
-    print(chords, notes)
+
+    measures = {}
+    for midx, mdata in enumerate(chords):
+        data = [mdata, notes[midx]]
+        measures[f"Measure {str(midx + 1)}"] = data
+
+    song_staffs[f"Staff {str(idx + 1)}"] = measures
+
+
+score = stream.Score()
+part = stream.Part()
+
+score.insert(metadata.Metadata())
+score.metadata.title = song_title
+score.metadata.composer = song_composer
+
+part.append(clef.TrebleClef())
+part.append(key.KeySignature(song_key))
+part.append(meter.TimeSignature(song_time))
+
+for k, v in song_staffs.items():
+    for m in v.values():
+        m_chords, m_notes = m[0].split(), m[1].split()
+        measure = stream.Measure()
+        
+        for idx, n in enumerate(m_notes):
+            if n == "RS":
+                measure.leftBarline = bar.Repeat(direction="start")
+            elif n == "RE":
+                measure.rightBarline = bar.Repeat(direction="end")
+            elif n == "CODA":
+                measure.append(repeat.Coda())
+            elif n == "NEW":
+                measure.append(layout.SystemLayout(isNew=True))
+        
+        part.append(measure)
+
+score.append(part)
+score.show("musicxml.pdf")
